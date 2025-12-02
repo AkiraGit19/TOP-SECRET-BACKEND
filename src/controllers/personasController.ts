@@ -1,8 +1,8 @@
 import { Request, Response } from "express";
 import { v4 as uuidv4 } from "uuid";
-import { Persona, CreatePersonaDTO, UpdatePersonaDTO, VoteDTO, ApiResponse } from "../types/Persona";
-import { loadPersonas, savePersonas } from "../utils/persistence";
-import { validateCreatePersona, validateUpdatePersona, validateVote } from "../utils/validation";
+import { Persona, CreatePersonaDTO, UpdatePersonaDTO, VoteDTO, ApiResponse } from "../types/Persona.js";
+import { loadPersonas, savePersonas } from "../utils/persistence.js";
+import { validateCreatePersona, validateUpdatePersona, validateVote } from "../utils/validation.js";
 
 /**
  * Obtener todas las personas
