@@ -2,7 +2,7 @@ import express from "express";
 import dotenv from "dotenv";
 import cors from "cors";
 import personasRoutes from "./routes/personas.js";
-import { loadPersonas } from "./utils/persistence.js";
+import { initDatabase } from "./utils/persistence.js";
 
 // Configurar variables de entorno
 dotenv.config();
@@ -28,12 +28,12 @@ app.use(cors({
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Cargar datos iniciales al iniciar el servidor
+// Inicializar base de datos al iniciar el servidor
 try {
-  loadPersonas();
-  console.log("✅ Datos cargados correctamente");
+  initDatabase();
+  console.log("✅ Base de datos inicializada correctamente");
 } catch (error) {
-  console.error("⚠️ Error al cargar datos iniciales:", error);
+  console.error("⚠️ Error al inicializar base de datos:", error);
 }
 
 // Rutas

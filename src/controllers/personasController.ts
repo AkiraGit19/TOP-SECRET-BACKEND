@@ -1,15 +1,23 @@
+
 import { Request, Response } from "express";
 import { v4 as uuidv4 } from "uuid";
 import { Persona, CreatePersonaDTO, UpdatePersonaDTO, VoteDTO, ApiResponse } from "../types/Persona.js";
-import { loadPersonas, savePersonas } from "../utils/persistence.js";
+import {
+  getAllPersonasFromDB,
+  getPersonaByIdFromDB,
+  createPersonaInDB,
+  updatePersonaInDB,
+  deletePersonaFromDB,
+  searchPersonasInDB
+} from "../utils/persistence.js";
 import { validateCreatePersona, validateUpdatePersona, validateVote } from "../utils/validation.js";
 
 /**
  * Obtener todas las personas
  */
-export const getAllPersonas = (req: Request, res: Response): void => {
+export const getAllPersonas = async (req: Request, res: Response): Promise<void> => {
   try {
-    const personas = loadPersonas();
+    const personas = await getAllPersonasFromDB();
     const response: ApiResponse<Persona[]> = {
       success: true,
       data: personas
@@ -27,11 +35,14 @@ export const getAllPersonas = (req: Request, res: Response): void => {
 /**
  * Obtener una persona por ID
  */
-export const getPersonaById = (req: Request, res: Response): void => {
+export const getPersonaById = async (req: Request, res: Response): Promise<void> => {
   try {
     const { id } = req.params;
-    const personas = loadPersonas();
-    const persona = personas.find(p => p.id === id);
+    if (!id) {
+      res.status(400).json({ success: false, message: "ID requerido" });
+      return;
+    }
+    const persona = await getPersonaByIdFromDB(id);
 
     if (!persona) {
       const response: ApiResponse = {
@@ -59,7 +70,7 @@ export const getPersonaById = (req: Request, res: Response): void => {
 /**
  * Crear una nueva persona
  */
-export const createPersona = (req: Request, res: Response): void => {
+export const createPersona = async (req: Request, res: Response): Promise<void> => {
   try {
     const data: CreatePersonaDTO = req.body;
     const validation = validateCreatePersona(data);
@@ -73,7 +84,6 @@ export const createPersona = (req: Request, res: Response): void => {
       return;
     }
 
-    const personas = loadPersonas();
     const newPersona: Persona = {
       id: uuidv4(),
       nombres: data.nombres.trim(),
@@ -87,12 +97,11 @@ export const createPersona = (req: Request, res: Response): void => {
       votosNoYala: data.votosNoYala ?? 0
     };
 
-    personas.push(newPersona);
-    savePersonas(personas);
+    const createdPersona = await createPersonaInDB(newPersona);
 
     const response: ApiResponse<Persona> = {
       success: true,
-      data: newPersona
+      data: createdPersona
     };
     res.status(201).json(response);
   } catch (error) {
@@ -107,9 +116,13 @@ export const createPersona = (req: Request, res: Response): void => {
 /**
  * Actualizar una persona existente
  */
-export const updatePersona = (req: Request, res: Response): void => {
+export const updatePersona = async (req: Request, res: Response): Promise<void> => {
   try {
     const { id } = req.params;
+    if (!id) {
+      res.status(400).json({ success: false, message: "ID requerido" });
+      return;
+    }
     const data: UpdatePersonaDTO = req.body;
     const validation = validateUpdatePersona(data);
 
@@ -122,19 +135,8 @@ export const updatePersona = (req: Request, res: Response): void => {
       return;
     }
 
-    const personas = loadPersonas();
-    const personaIndex = personas.findIndex(p => p.id === id);
+    const existingPersona = await getPersonaByIdFromDB(id);
 
-    if (personaIndex === -1) {
-      const response: ApiResponse = {
-        success: false,
-        message: "Persona no encontrada"
-      };
-      res.status(404).json(response);
-      return;
-    }
-
-    const existingPersona = personas[personaIndex];
     if (!existingPersona) {
       const response: ApiResponse = {
         success: false,
@@ -157,12 +159,11 @@ export const updatePersona = (req: Request, res: Response): void => {
       votosNoYala: existingPersona.votosNoYala
     };
 
-    personas[personaIndex] = updatedPersona;
-    savePersonas(personas);
+    const savedPersona = await updatePersonaInDB(updatedPersona);
 
     const response: ApiResponse<Persona> = {
       success: true,
-      data: updatedPersona
+      data: savedPersona
     };
     res.status(200).json(response);
   } catch (error) {
@@ -177,13 +178,16 @@ export const updatePersona = (req: Request, res: Response): void => {
 /**
  * Eliminar una persona
  */
-export const deletePersona = (req: Request, res: Response): void => {
+export const deletePersona = async (req: Request, res: Response): Promise<void> => {
   try {
     const { id } = req.params;
-    const personas = loadPersonas();
-    const personaIndex = personas.findIndex(p => p.id === id);
+    if (!id) {
+      res.status(400).json({ success: false, message: "ID requerido" });
+      return;
+    }
+    const existingPersona = await getPersonaByIdFromDB(id);
 
-    if (personaIndex === -1) {
+    if (!existingPersona) {
       const response: ApiResponse = {
         success: false,
         message: "Persona no encontrada"
@@ -192,8 +196,7 @@ export const deletePersona = (req: Request, res: Response): void => {
       return;
     }
 
-    personas.splice(personaIndex, 1);
-    savePersonas(personas);
+    await deletePersonaFromDB(id);
 
     const response: ApiResponse = {
       success: true,
@@ -212,9 +215,13 @@ export const deletePersona = (req: Request, res: Response): void => {
 /**
  * Votar por una persona
  */
-export const votePersona = (req: Request, res: Response): void => {
+export const votePersona = async (req: Request, res: Response): Promise<void> => {
   try {
     const { id } = req.params;
+    if (!id) {
+      res.status(400).json({ success: false, message: "ID requerido" });
+      return;
+    }
     const data: VoteDTO = req.body;
     const validation = validateVote(data);
 
@@ -227,19 +234,8 @@ export const votePersona = (req: Request, res: Response): void => {
       return;
     }
 
-    const personas = loadPersonas();
-    const personaIndex = personas.findIndex(p => p.id === id);
+    const persona = await getPersonaByIdFromDB(id);
 
-    if (personaIndex === -1) {
-      const response: ApiResponse = {
-        success: false,
-        message: "Persona no encontrada"
-      };
-      res.status(404).json(response);
-      return;
-    }
-
-    const persona = personas[personaIndex];
     if (!persona) {
       const response: ApiResponse = {
         success: false,
@@ -255,12 +251,11 @@ export const votePersona = (req: Request, res: Response): void => {
       persona.votosNoYala += 1;
     }
 
-    personas[personaIndex] = persona;
-    savePersonas(personas);
+    const updatedPersona = await updatePersonaInDB(persona);
 
     const response: ApiResponse<Persona> = {
       success: true,
-      data: persona
+      data: updatedPersona
     };
     res.status(200).json(response);
   } catch (error) {
@@ -275,29 +270,15 @@ export const votePersona = (req: Request, res: Response): void => {
 /**
  * Buscar personas con filtros (opcional)
  */
-export const searchPersonas = (req: Request, res: Response): void => {
+export const searchPersonas = async (req: Request, res: Response): Promise<void> => {
   try {
     const { search, distrito, universidad } = req.query;
-    let personas = loadPersonas();
 
-    // Filtrar por búsqueda en nombres y apellidos
-    if (search && typeof search === "string") {
-      const searchLower = search.toLowerCase();
-      personas = personas.filter(
-        p => p.nombres.toLowerCase().includes(searchLower) ||
-             p.apellidos.toLowerCase().includes(searchLower)
-      );
-    }
-
-    // Filtrar por distrito exacto
-    if (distrito && typeof distrito === "string") {
-      personas = personas.filter(p => p.distrito === distrito);
-    }
-
-    // Filtrar por universidad exacta
-    if (universidad && typeof universidad === "string") {
-      personas = personas.filter(p => p.universidad === universidad);
-    }
+    const personas = await searchPersonasInDB(
+      typeof search === "string" ? search : undefined,
+      typeof distrito === "string" ? distrito : undefined,
+      typeof universidad === "string" ? universidad : undefined
+    );
 
     const response: ApiResponse<Persona[]> = {
       success: true,
@@ -312,4 +293,3 @@ export const searchPersonas = (req: Request, res: Response): void => {
     res.status(500).json(response);
   }
 };
-
