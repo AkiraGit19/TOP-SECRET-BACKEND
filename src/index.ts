@@ -7,6 +7,7 @@ import { loadPersonas } from "./utils/persistence.js";
 // Configurar variables de entorno
 dotenv.config();
 
+
 // Crear aplicación Express
 const app = express();
 
@@ -18,7 +19,8 @@ app.use(cors({
   origin: [
     "http://localhost:5173",
     "http://localhost:5174",
-    "http://localhost:3000"
+    "http://localhost:3000",
+    "https://[nombre-de-tu-frontend].vercel.app"
   ],
   credentials: true
 }));
