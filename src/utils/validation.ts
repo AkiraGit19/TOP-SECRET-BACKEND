@@ -1,4 +1,4 @@
-import { CreatePersonaDTO, UpdatePersonaDTO, VoteDTO } from "../types/Persona";
+import { CreatePersonaDTO, UpdatePersonaDTO, VoteDTO } from "../types/Persona.js";
 
 /**
  * Valida los datos para crear una persona

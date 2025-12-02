@@ -1,8 +1,8 @@
 import express from "express";
 import dotenv from "dotenv";
 import cors from "cors";
-import personasRoutes from "./routes/personas";
-import { loadPersonas } from "./utils/persistence";
+import personasRoutes from "./routes/personas.js";
+import { loadPersonas } from "./utils/persistence.js";
 
 // Configurar variables de entorno
 dotenv.config();

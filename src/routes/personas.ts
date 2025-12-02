@@ -7,7 +7,7 @@ import {
   deletePersona,
   votePersona,
   searchPersonas
-} from "../controllers/personasController";
+} from "../controllers/personasController.js";
 
 const router = Router();
 

@@ -1,7 +1,7 @@
 import * as fs from "fs";
 import * as path from "path";
-import { Persona } from "../types/Persona";
-import { personas as initialData } from "../data/personas";
+import { Persona } from "../types/Persona.js";
+import { personas as initialData } from "../data/personas.js";
 
 // Ruta del archivo JSON de datos (relativa al directorio del proyecto)
 const DATA_FILE_PATH = path.join(process.cwd(), "src/data/personas.json");
